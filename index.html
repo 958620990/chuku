@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>幼儿园库房管理系统</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏫 幼儿园库房管理系统</h1>
+            <nav>
+                <button class="nav-btn active" data-tab="inventory">库存管理</button>
+                <button class="nav-btn" data-tab="inbound">入库管理</button>
+                <button class="nav-btn" data-tab="outbound">出库管理</button>
+                <button class="nav-btn" data-tab="records">操作记录</button>
+            </nav>
+        </header>
+
+        <main>
+            <!-- 库存管理 -->
+            <div id="inventory" class="tab-content active">
+                <div class="section-header">
+                    <h2>📦 库存管理</h2>
+                    <button class="btn btn-primary" onclick="showAddItemModal()">添加物品</button>
+                </div>
+                
+                <div class="search-bar">
+                    <input type="text" id="searchInput" placeholder="搜索物品名称或编号...">
+                    <select id="categoryFilter">
+                        <option value="">全部分类</option>
+                        <option value="玩具">玩具</option>
+                        <option value="教具">教具</option>
+                        <option value="文具">文具</option>
+                        <option value="清洁用品">清洁用品</option>
+                        <option value="其他">其他</option>
+                    </select>
+                </div>
+
+                <div class="inventory-grid" id="inventoryGrid">
+                    <!-- 库存物品将在这里显示 -->
+                </div>
+            </div>
+
+            <!-- 入库管理 -->
+            <div id="inbound" class="tab-content">
+                <div class="section-header">
+                    <h2>📥 入库管理</h2>
+                </div>
+                
+                <form id="inboundForm" class="form-container">
+                    <div class="form-group">
+                        <label for="inboundItem">选择物品：</label>
+                        <select id="inboundItem" required>
+                            <option value="">请选择物品</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="inboundQuantity">入库数量：</label>
+                        <input type="number" id="inboundQuantity" min="1" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="inboundReason">入库原因：</label>
+                        <select id="inboundReason" required>
+                            <option value="">请选择原因</option>
+                            <option value="新采购">新采购</option>
+                            <option value="捐赠">捐赠</option>
+                            <option value="归还">归还</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="inboundNote">备注：</label>
+                        <textarea id="inboundNote" rows="3"></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success">确认入库</button>
+                </form>
+            </div>
+
+            <!-- 出库管理 -->
+            <div id="outbound" class="tab-content">
+                <div class="section-header">
+                    <h2>📤 出库管理</h2>
+                </div>
+                
+                <form id="outboundForm" class="form-container">
+                    <div class="form-group">
+                        <label for="outboundItem">选择物品：</label>
+                        <select id="outboundItem" required>
+                            <option value="">请选择物品</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="outboundQuantity">出库数量：</label>
+                        <input type="number" id="outboundQuantity" min="1" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="outboundClass">使用班级：</label>
+                        <select id="outboundClass" required>
+                            <option value="">请选择班级</option>
+                            <option value="小班A">小班A</option>
+                            <option value="小班B">小班B</option>
+                            <option value="中班A">中班A</option>
+                            <option value="中班B">中班B</option>
+                            <option value="大班A">大班A</option>
+                            <option value="大班B">大班B</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="outboundTeacher">领取老师：</label>
+                        <input type="text" id="outboundTeacher" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="outboundNote">备注：</label>
+                        <textarea id="outboundNote" rows="3"></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-warning">确认出库</button>
+                </form>
+            </div>
+
+            <!-- 操作记录 -->
+            <div id="records" class="tab-content">
+                <div class="section-header">
+                    <h2>📋 操作记录</h2>
+                    <div class="record-filters">
+                        <select id="recordTypeFilter">
+                            <option value="">全部操作</option>
+                            <option value="入库">入库</option>
+                            <option value="出库">出库</option>
+                        </select>
+                        <input type="date" id="recordDateFilter">
+                    </div>
+                </div>
+                
+                <div class="records-container" id="recordsContainer">
+                    <!-- 操作记录将在这里显示 -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 添加物品模态框 -->
+    <div id="addItemModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>添加新物品</h3>
+                <span class="close" onclick="closeAddItemModal()">&times;</span>
+            </div>
+            <form id="addItemForm">
+                <div class="form-group">
+                    <label for="itemName">物品名称：</label>
+                    <input type="text" id="itemName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="itemCategory">物品分类：</label>
+                    <select id="itemCategory" required>
+                        <option value="">请选择分类</option>
+                        <option value="玩具">玩具</option>
+                        <option value="教具">教具</option>
+                        <option value="文具">文具</option>
+                        <option value="清洁用品">清洁用品</option>
+                        <option value="其他">其他</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="itemUnit">计量单位：</label>
+                    <select id="itemUnit" required>
+                        <option value="">请选择单位</option>
+                        <option value="个">个</option>
+                        <option value="套">套</option>
+                        <option value="盒">盒</option>
+                        <option value="包">包</option>
+                        <option value="瓶">瓶</option>
+                        <option value="本">本</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="itemDescription">物品描述：</label>
+                    <textarea id="itemDescription" rows="3"></textarea>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeAddItemModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">添加</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
