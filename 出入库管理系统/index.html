@@ -15,6 +15,7 @@
                 <button class="nav-btn" data-tab="inbound">入库管理</button>
                 <button class="nav-btn" data-tab="outbound">出库管理</button>
                 <button class="nav-btn" data-tab="records">操作记录</button>
+                <button class="nav-btn" data-tab="categories">分类管理</button>
             </nav>
         </header>
 
@@ -30,11 +31,7 @@
                     <input type="text" id="searchInput" placeholder="搜索物品名称或编号...">
                     <select id="categoryFilter">
                         <option value="">全部分类</option>
-                        <option value="玩具">玩具</option>
-                        <option value="教具">教具</option>
-                        <option value="文具">文具</option>
-                        <option value="清洁用品">清洁用品</option>
-                        <option value="其他">其他</option>
+                        <!-- 分类选项将动态生成 -->
                     </select>
                 </div>
 
@@ -147,6 +144,18 @@
                     <!-- 操作记录将在这里显示 -->
                 </div>
             </div>
+
+            <!-- 分类管理 -->
+            <div id="categories" class="tab-content">
+                <div class="section-header">
+                    <h2>🏷️ 分类管理</h2>
+                    <button class="btn btn-primary" onclick="showAddCategoryModal()">添加分类</button>
+                </div>
+                
+                <div class="categories-grid" id="categoriesGrid">
+                    <!-- 分类列表将在这里显示 -->
+                </div>
+            </div>
         </main>
     </div>
 
@@ -167,11 +176,7 @@
                     <label for="itemCategory">物品分类：</label>
                     <select id="itemCategory" required>
                         <option value="">请选择分类</option>
-                        <option value="玩具">玩具</option>
-                        <option value="教具">教具</option>
-                        <option value="文具">文具</option>
-                        <option value="清洁用品">清洁用品</option>
-                        <option value="其他">其他</option>
+                        <!-- 分类选项将动态生成 -->
                     </select>
                 </div>
                 
@@ -196,6 +201,94 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeAddItemModal()">取消</button>
                     <button type="submit" class="btn btn-primary">添加</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 添加分类模态框 -->
+    <div id="addCategoryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>添加新分类</h3>
+                <span class="close" onclick="closeAddCategoryModal()">&times;</span>
+            </div>
+            <form id="addCategoryForm">
+                <div class="form-group">
+                    <label for="categoryName">分类名称：</label>
+                    <input type="text" id="categoryName" required placeholder="请输入分类名称">
+                </div>
+                
+                <div class="form-group">
+                    <label for="categoryIcon">分类图标：</label>
+                    <select id="categoryIcon" required>
+                        <option value="">请选择图标</option>
+                        <option value="🧸">🧸 玩具</option>
+                        <option value="📚">📚 教具</option>
+                        <option value="✏️">✏️ 文具</option>
+                        <option value="🧽">🧽 清洁用品</option>
+                        <option value="🎨">🎨 美术用品</option>
+                        <option value="🎵">🎵 音乐用品</option>
+                        <option value="⚽">⚽ 体育用品</option>
+                        <option value="🍽️">🍽️ 餐具</option>
+                        <option value="🛏️">🛏️ 生活用品</option>
+                        <option value="📦">📦 其他</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="categoryDescription">分类描述：</label>
+                    <textarea id="categoryDescription" rows="3" placeholder="请输入分类描述（可选）"></textarea>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeAddCategoryModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">添加</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 编辑分类模态框 -->
+    <div id="editCategoryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>编辑分类</h3>
+                <span class="close" onclick="closeEditCategoryModal()">&times;</span>
+            </div>
+            <form id="editCategoryForm">
+                <input type="hidden" id="editCategoryId">
+                
+                <div class="form-group">
+                    <label for="editCategoryName">分类名称：</label>
+                    <input type="text" id="editCategoryName" required placeholder="请输入分类名称">
+                </div>
+                
+                <div class="form-group">
+                    <label for="editCategoryIcon">分类图标：</label>
+                    <select id="editCategoryIcon" required>
+                        <option value="">请选择图标</option>
+                        <option value="🧸">🧸 玩具</option>
+                        <option value="📚">📚 教具</option>
+                        <option value="✏️">✏️ 文具</option>
+                        <option value="🧽">🧽 清洁用品</option>
+                        <option value="🎨">🎨 美术用品</option>
+                        <option value="🎵">🎵 音乐用品</option>
+                        <option value="⚽">⚽ 体育用品</option>
+                        <option value="🍽️">🍽️ 餐具</option>
+                        <option value="🛏️">🛏️ 生活用品</option>
+                        <option value="📦">📦 其他</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="editCategoryDescription">分类描述：</label>
+                    <textarea id="editCategoryDescription" rows="3" placeholder="请输入分类描述（可选）"></textarea>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditCategoryModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">保存</button>
                 </div>
             </form>
         </div>

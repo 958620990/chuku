@@ -1,6 +1,7 @@
 // 数据存储
 let inventory = JSON.parse(localStorage.getItem('kindergarten_inventory')) || [];
 let records = JSON.parse(localStorage.getItem('kindergarten_records')) || [];
+let categories = JSON.parse(localStorage.getItem('kindergarten_categories')) || [];
 
 // 初始化应用
 document.addEventListener('DOMContentLoaded', function() {
@@ -17,12 +18,17 @@ function initializeApp() {
     // 渲染初始数据
     renderInventory();
     renderRecords();
+    renderCategories();
     updateItemSelects();
+    updateCategorySelects();
     
     // 初始化搜索和过滤
     initSearchAndFilter();
     
     // 添加一些示例数据（如果没有数据的话）
+    if (categories.length === 0) {
+        addDefaultCategories();
+    }
     if (inventory.length === 0) {
         addSampleData();
     }
@@ -58,6 +64,12 @@ function initFormEvents() {
     
     // 出库表单
     document.getElementById('outboundForm').addEventListener('submit', handleOutbound);
+    
+    // 添加分类表单
+    document.getElementById('addCategoryForm').addEventListener('submit', handleAddCategory);
+    
+    // 编辑分类表单
+    document.getElementById('editCategoryForm').addEventListener('submit', handleEditCategory);
 }
 
 // 搜索和过滤初始化
@@ -91,6 +103,7 @@ function handleAddItem(e) {
     inventory.push(newItem);
     saveData();
     renderInventory();
+    renderCategories();
     updateItemSelects();
     closeAddItemModal();
     showMessage('物品添加成功！', 'success');
@@ -129,6 +142,7 @@ function handleInbound(e) {
         records.unshift(record);
         saveData();
         renderInventory();
+        renderCategories();
         renderRecords();
         showMessage(`${item.name} 入库成功！数量：${quantity}${item.unit}`, 'success');
         
@@ -175,6 +189,7 @@ function handleOutbound(e) {
         records.unshift(record);
         saveData();
         renderInventory();
+        renderCategories();
         renderRecords();
         showMessage(`${item.name} 出库成功！数量：${quantity}${item.unit}`, 'success');
         
@@ -285,6 +300,217 @@ function updateItemSelects() {
     outboundSelect.innerHTML = '<option value="">请选择物品</option>' + options;
 }
 
+// 更新分类选择下拉框
+function updateCategorySelects() {
+    const categoryFilter = document.getElementById('categoryFilter');
+    const itemCategory = document.getElementById('itemCategory');
+    
+    const options = categories.map(category => 
+        `<option value="${category.name}">${category.icon} ${category.name}</option>`
+    ).join('');
+    
+    categoryFilter.innerHTML = '<option value="">全部分类</option>' + options;
+    itemCategory.innerHTML = '<option value="">请选择分类</option>' + options;
+}
+
+// 渲染分类管理
+function renderCategories() {
+    const grid = document.getElementById('categoriesGrid');
+    
+    // 计算分类统计
+    const categoryStats = categories.map(category => {
+        const categoryItems = inventory.filter(item => item.category === category.name);
+        const totalItems = categoryItems.length;
+        const totalQuantity = categoryItems.reduce((sum, item) => sum + item.quantity, 0);
+        
+        return {
+            ...category,
+            totalItems,
+            totalQuantity
+        };
+    });
+    
+    // 添加总体统计
+    const totalCategories = categories.length;
+    const totalItems = inventory.length;
+    const totalQuantity = inventory.reduce((sum, item) => sum + item.quantity, 0);
+    
+    const summaryHtml = `
+        <div class="category-summary">
+            <h3>📊 分类统计概览</h3>
+            <div class="summary-stats">
+                <div class="summary-stat">
+                    <span class="stat-number">${totalCategories}</span>
+                    <span class="stat-label">总分类数</span>
+                </div>
+                <div class="summary-stat">
+                    <span class="stat-number">${totalItems}</span>
+                    <span class="stat-label">物品种类</span>
+                </div>
+                <div class="summary-stat">
+                    <span class="stat-number">${totalQuantity}</span>
+                    <span class="stat-label">库存总量</span>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    const categoriesHtml = categoryStats.map(category => `
+        <div class="category-item ${category.isDefault ? 'default-category' : ''} fade-in">
+            <div class="category-header">
+                <span class="category-icon">${category.icon}</span>
+                <h3 class="category-name">${category.name}</h3>
+            </div>
+            
+            ${category.description ? `<div class="category-description">${category.description}</div>` : ''}
+            
+            <div class="category-stats">
+                <div class="stat">
+                    <div class="stat-number">${category.totalItems}</div>
+                    <div class="stat-label">物品种类</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">${category.totalQuantity}</div>
+                    <div class="stat-label">库存总量</div>
+                </div>
+            </div>
+            
+            <div class="category-actions">
+                <button class="btn btn-primary" onclick="editCategory('${category.id}')">编辑</button>
+                <button class="btn btn-danger ${category.isDefault ? '' : ''}" 
+                        onclick="deleteCategory('${category.id}')" 
+                        ${category.isDefault ? 'disabled title="默认分类不能删除"' : ''}>
+                    删除
+                </button>
+            </div>
+        </div>
+    `).join('');
+    
+    grid.innerHTML = summaryHtml + categoriesHtml;
+}
+
+// 添加分类
+function handleAddCategory(e) {
+    e.preventDefault();
+    
+    const name = document.getElementById('categoryName').value.trim();
+    const icon = document.getElementById('categoryIcon').value;
+    const description = document.getElementById('categoryDescription').value.trim();
+    
+    // 检查分类名称是否已存在
+    if (categories.some(category => category.name === name)) {
+        showMessage('分类名称已存在！', 'error');
+        return;
+    }
+    
+    const newCategory = {
+        id: Date.now().toString(),
+        name: name,
+        icon: icon,
+        description: description,
+        isDefault: false,
+        createdAt: new Date().toISOString()
+    };
+    
+    categories.push(newCategory);
+    saveData();
+    renderCategories();
+    updateCategorySelects();
+    closeAddCategoryModal();
+    showMessage('分类添加成功！', 'success');
+    
+    // 重置表单
+    e.target.reset();
+}
+
+// 编辑分类
+function editCategory(categoryId) {
+    const category = categories.find(cat => cat.id === categoryId);
+    if (!category) return;
+    
+    document.getElementById('editCategoryId').value = category.id;
+    document.getElementById('editCategoryName').value = category.name;
+    document.getElementById('editCategoryIcon').value = category.icon;
+    document.getElementById('editCategoryDescription').value = category.description || '';
+    
+    document.getElementById('editCategoryModal').style.display = 'block';
+}
+
+// 处理编辑分类
+function handleEditCategory(e) {
+    e.preventDefault();
+    
+    const categoryId = document.getElementById('editCategoryId').value;
+    const name = document.getElementById('editCategoryName').value.trim();
+    const icon = document.getElementById('editCategoryIcon').value;
+    const description = document.getElementById('editCategoryDescription').value.trim();
+    
+    const category = categories.find(cat => cat.id === categoryId);
+    if (!category) return;
+    
+    // 检查分类名称是否已存在（排除当前分类）
+    if (categories.some(cat => cat.name === name && cat.id !== categoryId)) {
+        showMessage('分类名称已存在！', 'error');
+        return;
+    }
+    
+    const oldName = category.name;
+    
+    // 更新分类信息
+    category.name = name;
+    category.icon = icon;
+    category.description = description;
+    
+    // 更新所有使用该分类的物品
+    inventory.forEach(item => {
+        if (item.category === oldName) {
+            item.category = name;
+        }
+    });
+    
+    saveData();
+    renderCategories();
+    renderInventory();
+    updateCategorySelects();
+    closeEditCategoryModal();
+    showMessage('分类更新成功！', 'success');
+}
+
+// 删除分类
+function deleteCategory(categoryId) {
+    const category = categories.find(cat => cat.id === categoryId);
+    if (!category) return;
+    
+    if (category.isDefault) {
+        showMessage('默认分类不能删除！', 'error');
+        return;
+    }
+    
+    // 检查是否有物品使用该分类
+    const itemsUsingCategory = inventory.filter(item => item.category === category.name);
+    if (itemsUsingCategory.length > 0) {
+        if (!confirm(`该分类下还有 ${itemsUsingCategory.length} 个物品，删除分类后这些物品将被移动到"其他"分类。确定要删除吗？`)) {
+            return;
+        }
+        
+        // 将使用该分类的物品移动到"其他"分类
+        itemsUsingCategory.forEach(item => {
+            item.category = '其他';
+        });
+    } else {
+        if (!confirm('确定要删除这个分类吗？此操作不可恢复！')) {
+            return;
+        }
+    }
+    
+    categories = categories.filter(cat => cat.id !== categoryId);
+    saveData();
+    renderCategories();
+    renderInventory();
+    updateCategorySelects();
+    showMessage('分类删除成功！', 'success');
+}
+
 // 快速入库
 function quickInbound(itemId) {
     const quantity = prompt('请输入入库数量：');
@@ -308,6 +534,7 @@ function quickInbound(itemId) {
             records.unshift(record);
             saveData();
             renderInventory();
+            renderCategories();
             renderRecords();
             showMessage(`${item.name} 快速入库成功！`, 'success');
         }
@@ -349,6 +576,7 @@ function quickOutbound(itemId) {
         records.unshift(record);
         saveData();
         renderInventory();
+        renderCategories();
         renderRecords();
         showMessage(`${item.name} 快速出库成功！`, 'success');
     }
@@ -360,6 +588,7 @@ function deleteItem(itemId) {
         inventory = inventory.filter(item => item.id !== itemId);
         saveData();
         renderInventory();
+        renderCategories();
         updateItemSelects();
         showMessage('物品删除成功！', 'success');
     }
@@ -374,11 +603,33 @@ function closeAddItemModal() {
     document.getElementById('addItemModal').style.display = 'none';
 }
 
+// 分类模态框控制
+function showAddCategoryModal() {
+    document.getElementById('addCategoryModal').style.display = 'block';
+}
+
+function closeAddCategoryModal() {
+    document.getElementById('addCategoryModal').style.display = 'none';
+}
+
+function closeEditCategoryModal() {
+    document.getElementById('editCategoryModal').style.display = 'none';
+}
+
 // 点击模态框外部关闭
 window.onclick = function(event) {
-    const modal = document.getElementById('addItemModal');
-    if (event.target === modal) {
-        modal.style.display = 'none';
+    const addItemModal = document.getElementById('addItemModal');
+    const addCategoryModal = document.getElementById('addCategoryModal');
+    const editCategoryModal = document.getElementById('editCategoryModal');
+    
+    if (event.target === addItemModal) {
+        addItemModal.style.display = 'none';
+    }
+    if (event.target === addCategoryModal) {
+        addCategoryModal.style.display = 'none';
+    }
+    if (event.target === editCategoryModal) {
+        editCategoryModal.style.display = 'none';
     }
 }
 
@@ -421,6 +672,56 @@ function formatDateTime(isoString) {
 function saveData() {
     localStorage.setItem('kindergarten_inventory', JSON.stringify(inventory));
     localStorage.setItem('kindergarten_records', JSON.stringify(records));
+    localStorage.setItem('kindergarten_categories', JSON.stringify(categories));
+}
+
+// 添加默认分类
+function addDefaultCategories() {
+    const defaultCategories = [
+        {
+            id: 'default_1',
+            name: '玩具',
+            icon: '🧸',
+            description: '各种儿童玩具用品',
+            isDefault: true,
+            createdAt: new Date().toISOString()
+        },
+        {
+            id: 'default_2',
+            name: '教具',
+            icon: '📚',
+            description: '教学用具和学习材料',
+            isDefault: true,
+            createdAt: new Date().toISOString()
+        },
+        {
+            id: 'default_3',
+            name: '文具',
+            icon: '✏️',
+            description: '笔、纸、本子等文具用品',
+            isDefault: true,
+            createdAt: new Date().toISOString()
+        },
+        {
+            id: 'default_4',
+            name: '清洁用品',
+            icon: '🧽',
+            description: '清洁和卫生用品',
+            isDefault: true,
+            createdAt: new Date().toISOString()
+        },
+        {
+            id: 'default_5',
+            name: '其他',
+            icon: '📦',
+            description: '其他未分类物品',
+            isDefault: true,
+            createdAt: new Date().toISOString()
+        }
+    ];
+    
+    categories = defaultCategories;
+    saveData();
 }
 
 // 添加示例数据
